@@ -1,12 +1,5 @@
 #include "ppu.h"
 
-/*
- * TODOs:
- * - sprites actually rendering
- * - sprite hit
- * - sprite overflow
- */
-
 u32 ppu_clr_pal[64] = { // RGB888 colors
 	0x666666, 0x002A88, 0x1412A7, 0x3B00A4, 0x5C007E, 0x6E0040, 0x6C0600, 0x561D00,
 	0x333500, 0x0B4800, 0x005200, 0x004F08, 0x00404D, 0x000000, 0x000000, 0x000000,
@@ -415,7 +408,7 @@ void ppu_spr_eval(struct ppu* ppu)
 
 	if (ppu->dot == 65) {
 		ppu->in_range = ppu->s = 
-			ppu->done = ppu->line_spr_found = 0;
+			ppu->done = 0;
 		ppu->n = (ppu->oam_addr >> 2) & 0x3f;
 		ppu->m = ppu->oam_addr & 3;
 	}
@@ -438,9 +431,7 @@ void ppu_spr_eval(struct ppu* ppu)
 				if (ppu->in_range) {
 					ppu->m++;
 					ppu->s++;
-					if (ppu->n == 0) ppu->spr0line = 1;
 					if (ppu->m == 4) {
-						ppu->line_spr_found++;
 						ppu->in_range = ppu->m = 0;
 						ppu->n = (ppu->n + 1) & 0x3f;
 						if (!ppu->n) ppu->done = 1;
@@ -553,7 +544,7 @@ void ppu_visible_tick(struct ppu* ppu)
 
 	// reset internal x counter and 2nd OAM counter
 	if (ppu->dot == 0) {
-		ppu->ix = ppu->s = ppu->done = 0;
+		ppu->s = ppu->done = 0;
 	}
 	// initialize secondary oam
 	if (ppu->dot >= 1 && ppu->dot <= 64) {
@@ -588,7 +579,6 @@ void ppu_visible_tick(struct ppu* ppu)
 		ppu_shift_registers(ppu);
 		ppu_shift_update(ppu);
 		ppu_horz_copy(ppu);
-		ppu->old_spr0line = ppu->spr0line;
 	}
 }
 
@@ -614,7 +604,7 @@ void ppu_pre_rend_tick(struct ppu* ppu)
 	ppu_pixel(ppu);
 
 	if (ppu->dot == 0) {
-		ppu->ix = ppu->s = ppu->done = ppu->spr0line = 0;
+		ppu->s = ppu->done = 0;
 	}
 	// initialize secondary oam
 	if (ppu->dot >= 1 && ppu->dot <= 64) {

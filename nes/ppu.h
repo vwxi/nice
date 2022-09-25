@@ -71,7 +71,6 @@ struct ppu {
 	u16 t;
 	u8 x;
 	u8 w;
-	u16 ix;
 
 	// bg latches
 	u8 ntl;
@@ -91,7 +90,6 @@ struct ppu {
 	u8 m;
 	u8 in_range;
 	u8 done;
-	u8 line_spr_found;
 
 	// spr fetch regs
 	u8 cur_spr;
@@ -99,8 +97,6 @@ struct ppu {
 
 	// sprite other regs
 	u8 spr;
-	u8 spr0line;
-	u8 old_spr0line;
 
 	u8 vbl_block;
 	u8 ppu_delay;
