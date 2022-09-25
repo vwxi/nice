@@ -1,12 +1,5 @@
 #include "ppu.h"
 
-/*
- * TODOs:
- * - sprites actually rendering
- * - sprite hit
- * - sprite overflow
- */
-
 u32 ppu_clr_pal[64] = { // RGB888 colors
 	0x666666, 0x002A88, 0x1412A7, 0x3B00A4, 0x5C007E, 0x6E0040, 0x6C0600, 0x561D00,
 	0x333500, 0x0B4800, 0x005200, 0x004F08, 0x00404D, 0x000000, 0x000000, 0x000000,
