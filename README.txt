@@ -1,0 +1,12 @@
+- passes:
+  - nestest
+  - instr_test-v5
+  - ppu_vbl_nmi
+  - vbl_nmi_timing
+  - ppu_open_bus
+  - scanline.nes
+  - sprite_overflow_tests
+  - oam_read
+  - oam_stress
+  - sprite0hit tests
+- todo: joypad
