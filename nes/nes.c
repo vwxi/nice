@@ -12,11 +12,52 @@ int nes_init()
 	return 1;
 }
 
+u8 nes_dbg_io_read(u16 addr)
+{
+	switch (addr) {
+	case 0x4016: 
+		return nes.joyp & 1;
+	case 0x4017: break;
+	}
+
+	return 0;
+}
+
+u8 nes_io_read(u16 addr)
+{
+	u8 s;
+
+	switch (addr) {
+	case 0x4016: 
+		if (nes.strobe) return nes.joyp & 1;
+		else {
+			if (nes.jidx > 8) nes.jidx = 0;
+			return (nes.joyp >> nes.jidx++) & 1;
+		}
+		
+		break;
+	case 0x4017: break;
+	}
+
+	return 0;
+}
+
+void nes_io_write(u16 addr, u8 val)
+{
+	switch (addr) {
+	case 0x4016: 
+		nes.strobe = val & 1;
+		if (nes.strobe) nes.jidx = 0;
+		break;
+	case 0x4017: break;
+	}
+}
+
 u8 nes_dbg_read(u16 addr)
 {
 	R(0x0000, 0x1fff, nes.cpu.ram[addr % 0x800]);
 	R(0x2000, 0x3fff, ppu_dbg_io_read(&nes.ppu, addr));
-	R(0x4000, 0x4017, 0 /*IO and audio*/);
+	R(0x4000, 0x4017, nes_dbg_io_read(addr));
 	R(0x4018, 0xffff, cart_read(&nes.cart, addr));
 
 	return 0;
@@ -26,7 +67,7 @@ u8 _nes_read(u16 addr)
 {
 	R(0x0000, 0x1fff, nes.cpu.ram[addr % 0x800]);
 	R(0x2000, 0x3fff, ppu_io_read(&nes.ppu, addr));
-	R(0x4000, 0x4017, 0 /*IO and audio*/);
+	R(0x4000, 0x4017, nes_io_read(addr));
 	R(0x4014, 0x4014, ppu_io_read(&nes.ppu, addr));
 	R(0x4018, 0xffff, cart_read(&nes.cart, addr));
 
@@ -37,7 +78,7 @@ void _nes_write(u16 addr, u8 val)
 {
 	W(0x0000, 0x1fff, nes.cpu.ram[addr % 0x800] = val);
 	W(0x2000, 0x3fff, ppu_io_write(&nes.ppu, addr, val));
-	W(0x4000, 0x4017, /*IO and audio*/);
+	W(0x4000, 0x4017, nes_io_write(addr, val));
 	W(0x4014, 0x4014, ppu_io_write(&nes.ppu, addr, val));
 	W(0x4018, 0xffff, cart_write(&nes.cart, addr, val));
 }
@@ -80,12 +121,12 @@ int nes_mapper_supported()
 		0
 	};
 	
-	int i = 0, tog = 0;
+	int i = 0;
 
 	for (; i < 0x100; i++) {
 		if (nes.cart.type == ines_mappers[i])
-			tog = 1;
+			return 1;
 	}
 
-	return tog;
+	return 0;
 }

@@ -65,7 +65,7 @@ struct ppu {
 	u16 ppu_addr;
 	u8 ppu_data;
 	u8 oam_dma_addr;
-	u8 mirror; // 0=horizontal 1=vertical
+	u8 mirror;
 
 	u16 v;
 	u16 t;

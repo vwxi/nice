@@ -61,8 +61,36 @@ void window_run(struct window* w)
 		switch (w->event.type) {
 		case SDL_QUIT: w->quit = 1; break;
 		case SDL_KEYDOWN: case SDL_KEYUP: 
-			// todo
+			window_kbd(w, w->event.type, w->event.key.keysym.sym);
 			break;
+		}
+	}
+}
+
+void window_kbd(struct window* w, Uint32 t, SDL_Keycode c)
+{
+	if (t == SDL_KEYDOWN) {
+		switch (c) {
+		case SDLK_UP: nes.joyp |= K_UP; break; // up
+		case SDLK_DOWN: nes.joyp |= K_DOWN; break; // down
+		case SDLK_LEFT: nes.joyp |= K_LEFT; break; // left
+		case SDLK_RIGHT: nes.joyp |= K_RIGHT; break; // right
+		case SDLK_a: nes.joyp |= K_B; break; // B
+		case SDLK_s: nes.joyp |= K_A; break; // A
+		case SDLK_LSHIFT: nes.joyp |= K_SEL; break; // select
+		case SDLK_RETURN: nes.joyp |= K_STT; break; // start
+		}
+	}
+	else if (t == SDL_KEYUP) {
+		switch (c) {
+		case SDLK_UP: nes.joyp &= ~K_UP; break; // up
+		case SDLK_DOWN: nes.joyp &= ~K_DOWN; break; // down
+		case SDLK_LEFT: nes.joyp &= ~K_LEFT; break; // left
+		case SDLK_RIGHT: nes.joyp &= ~K_RIGHT; break; // right
+		case SDLK_a: nes.joyp &= ~K_B; break; // B
+		case SDLK_s: nes.joyp &= ~K_A; break; // A
+		case SDLK_LSHIFT: nes.joyp &= ~K_SEL; break; // select
+		case SDLK_RETURN: nes.joyp &= ~K_STT; break; // start
 		}
 	}
 }

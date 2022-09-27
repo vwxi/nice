@@ -23,6 +23,9 @@ struct nes {
 	struct cpu cpu;
 	struct cart cart;
 	struct ppu ppu;
+	u8 joyp;
+	u8 strobe;
+	u8 jidx;
 } nes;
 
 int nes_init();
