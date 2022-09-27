@@ -16,8 +16,8 @@ a work-in-progress NES emulator written for Windows
 ```
 -----------------------+
 |                +---+ |
-|   ↑        +---| a | |
-| ← . →      | s |---+ |
+|   ↑        +---| s | |
+| ← . →      | a |---+ |
 |   ↓        +---+     |
 |    lshift    enter   |
 -----------------------+
