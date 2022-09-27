@@ -13,7 +13,17 @@ a work-in-progress NES emulator written for Windows
 
 ## keys
 
-NONE yet (joypad yet to be implemented)
+```
+-----------------------+
+|                +---+ |
+|   ↑        +---| a | |
+| ← . →      | s |---+ |
+|   ↓        +---+     |
+|    lshift    enter   |
+-----------------------+
+```
+
+(arrows are arrow keys)
 
 ## tests passed
 
