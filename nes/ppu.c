@@ -304,7 +304,7 @@ void ppu_io_write(struct ppu* ppu, u16 addr, u8 val)
 	case 0x4014: 
 		ppu->oam_dma_addr = val;
 		for (; i < 0x100; i++) {
-			((u8*)ppu->oam)[i & 0xff] = nes_read((ppu->oam_dma_addr << 8) | i);
+			((u8*)ppu->oam)[(ppu->oam_addr+i) & 0xff] = nes_read((ppu->oam_dma_addr << 8) | i);
 			C;
 		}
 

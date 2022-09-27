@@ -16,7 +16,7 @@ u8 nes_dbg_io_read(u16 addr)
 {
 	switch (addr) {
 	case 0x4016: 
-		return nes.joyp & 1;
+		return (nes.joyp & 1) | (nes.ppu.open_bus & 0xfe);
 	case 0x4017: break;
 	}
 
@@ -29,10 +29,10 @@ u8 nes_io_read(u16 addr)
 
 	switch (addr) {
 	case 0x4016: 
-		if (nes.strobe) return nes.joyp & 1;
+		if (nes.strobe) return (nes.joyp & 1) | (nes.ppu.open_bus & 0xfe);
 		else {
 			if (nes.jidx > 8) nes.jidx = 0;
-			return (nes.joyp >> nes.jidx++) & 1;
+			return ((nes.joyp >> nes.jidx++) & 1) | (nes.ppu.open_bus & 0xf8);
 		}
 		
 		break;

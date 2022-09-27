@@ -21,13 +21,13 @@ struct window {
 	SDL_Texture* texture;
 	SDL_Event event;
 	int quit;
-
+	u32 ticks;
 };
 
 int window_init(struct window*);
 void window_destroy(struct window*);
 void window_run(struct window*);
 void window_draw(struct window*);
-void window_kbd(struct window*, Uint32, SDL_Keycode);
+void window_kbd(struct window*, u32, SDL_Keycode);
 
 #include "nes.h"

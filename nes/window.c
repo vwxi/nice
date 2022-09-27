@@ -34,7 +34,7 @@ int window_init(struct window* w)
 
 	if (!w->texture) return -4;
 
-	w->quit = 0;
+	w->quit = w->ticks = 0;
 	return 0;
 }
 
@@ -50,12 +50,20 @@ void window_destroy(struct window* w)
 
 void window_run(struct window* w)
 {
+	u32 old;
+
 	while (!w->quit) {
 		while (nes.cpu.cycles < 29781) {
 			cpu_step(&nes.cpu);
 		}
 
 		nes.cpu.cycles -= 29781;
+
+		old = w->ticks;
+		w->ticks = SDL_GetTicks();
+
+		if (w->ticks - old <= 33)
+			SDL_Delay(33 - (w->ticks - old));
 
 		SDL_PollEvent(&w->event);
 		switch (w->event.type) {
@@ -67,7 +75,7 @@ void window_run(struct window* w)
 	}
 }
 
-void window_kbd(struct window* w, Uint32 t, SDL_Keycode c)
+void window_kbd(struct window* w, u32 t, SDL_Keycode c)
 {
 	if (t == SDL_KEYDOWN) {
 		switch (c) {
