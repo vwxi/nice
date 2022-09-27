@@ -90,6 +90,8 @@ struct ppu {
 	u8 m;
 	u8 in_range;
 	u8 done;
+	u8 spr0line;
+	u8 o_spr0line;
 
 	// spr fetch regs
 	u8 cur_spr;

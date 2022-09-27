@@ -369,7 +369,7 @@ void ppu_pixel(struct ppu* ppu)
 		if (!(sat & A_PRIO)) col = spcol;
 		else col = bgcol;
 
-		if (ppu->spr == 0 && !(ppu->status & S_SPR0HIT) && cy != 255) {
+		if (ppu->spr == 0 && ppu->o_spr0line && !(ppu->status & S_SPR0HIT) && cy != 255) {
 			ppu->status |= S_SPR0HIT;
 		}
 	}
@@ -408,13 +408,14 @@ void ppu_spr_eval(struct ppu* ppu)
 
 	if (ppu->dot == 65) {
 		ppu->in_range = ppu->s = 
-			ppu->done = 0;
+			ppu->done = ppu->spr0line = 0;
 		ppu->n = (ppu->oam_addr >> 2) & 0x3f;
 		ppu->m = ppu->oam_addr & 3;
 	}
 
 	if (ppu->dot == 256) {
 		ppu->sprites_found = 0;
+		ppu->o_spr0line = ppu->spr0line;
 	}
 
 	if (ppu->dot & 1) {
@@ -431,6 +432,7 @@ void ppu_spr_eval(struct ppu* ppu)
 				if (ppu->in_range) {
 					ppu->m++;
 					ppu->s++;
+					if (ppu->n == 0) ppu->spr0line = 1;
 					if (ppu->m == 4) {
 						ppu->in_range = ppu->m = 0;
 						ppu->n = (ppu->n + 1) & 0x3f;
