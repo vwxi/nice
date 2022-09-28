@@ -592,7 +592,7 @@ void ppu_idle_tick(struct ppu* ppu)
 void ppu_vblank_tick(struct ppu* ppu)
 {
 	if (ppu->scanline == 240 && ppu->dot == 0) {
-		if (REND) window_draw(&nes.window);
+		window_draw(&nes.window);
 	}
 
 	if (ppu->scanline == 241 && ppu->dot == 1 && !ppu->vbl_block) {
