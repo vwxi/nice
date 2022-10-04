@@ -10,6 +10,10 @@
 #define LCLIP (!(ppu->mask & M_BG_LM) || !(ppu->mask & M_SPR_LM))
 #define PAL (((addr - 0x3f00) & ~((((addr-0x3f00) & 0x13) == 0x10) ? 0x10 : 0)) & 0x1f)
 
+#define HORIZOM 0
+#define VERTICM 1
+#define ONESCRM 2
+
 /* PPUCTRL flags */
 #define C_BASE_NT 3
 #define C_VRAM_INC (1<<2)

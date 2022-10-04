@@ -41,8 +41,9 @@ void ppu_init(struct ppu* ppu)
 u16 ppu_mirror(struct ppu* ppu, u16 addr)
 {
 	switch (ppu->mirror) {
-	case 0: return ((addr >> 1) & 0x400) | (addr & 0x3ff);
-	case 1: return addr & 0x7ff;
+	case HORIZOM: return ((addr >> 1) & 0x400) | (addr & 0x3ff);
+	case VERTICM: return addr & 0x7ff;
+	case ONESCRM: return addr & 0x3ff;
 	default: return addr - 0x2000;
 	}
 }

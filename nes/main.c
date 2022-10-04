@@ -23,11 +23,14 @@ int main(int argc, char** argv)
 	if (!hdr.chr_sz)
 		nes.cart.chr_ram =  1;
 
+	nes.cart.prg_banks = hdr.prg_sz;
+	nes.cart.chr_banks = hdr.chr_sz;
 	nes.cart.prg_sz = 0x4000 * hdr.prg_sz;
 	nes.cart.chr_sz = 0x2000 * (nes.cart.chr_ram ? 1 : hdr.chr_sz);
+	nes.cart.prg_ram_sz = (hdr.ram_sz != 0) ? 0x2000 * hdr.ram_sz : 0x2000;
 	nes.ppu.mirror = !(hdr.fl6 & (1 << 3)) ? hdr.fl6 & 1 : 2;
 	nes.cart.type = hdr.fl6 >> 4;
-
+	
 	if (!nes_mapper_supported()) {
 		puts("mapper unsupported");
 		goto bad;
@@ -54,7 +57,7 @@ int main(int argc, char** argv)
 		goto bad;
 	}
 
-	nes.cart.prg_ram = malloc(0x1000);
+	nes.cart.prg_ram = malloc(nes.cart.prg_ram_sz);
 	if (!nes.cart.prg_ram) {
 		puts("failed to allocate PRG RAM to heap");
 		goto bad;
@@ -67,6 +70,12 @@ int main(int argc, char** argv)
 			goto bad;
 		}
 	}
+
+	cart_init(&nes.cart);
+
+	printf("mapper %d, prg %dK (%d banks), chr %dK (%d banks), chr ram? %s\n",
+		nes.cart.type, nes.cart.prg_sz / 1024, nes.cart.prg_banks, nes.cart.chr_sz / 1024, nes.cart.chr_banks,
+		nes.cart.chr_ram ? "yes" : "no");
 
 	cpu_reset(&nes.cpu);
 

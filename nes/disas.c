@@ -206,15 +206,15 @@ void disas_print_state(struct cpu* cpu)
 		puts("failed to format opcode and opcode bytes");
 	}
 
-	/*printf("%04X  %s\t%-32s"
+	printf("%04X  %s\t%-32s"
 		"A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d SL:%d\n", 
 		cpu->PC - 1, bytes, fmt,
-		cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S, nes.ppu.dot, nes.ppu.scanline);*/
+		cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S, nes.ppu.dot, nes.ppu.scanline);
 
-	printf("%04X %-32s"
+	/*printf("%04X %-32s"
 		"A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d SL:%d\n",
 		cpu->PC - 1, fmt,
-		cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S, nes.ppu.dot, nes.ppu.scanline);
+		cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S, nes.ppu.dot, nes.ppu.scanline);*/
 
 	free(bytes);
 	free(fmt);
