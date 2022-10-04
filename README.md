@@ -44,3 +44,7 @@ a work-in-progress NES emulator written for Windows
 - oam_stress
 - sprite_hit_tests_2005.10.05
 - blargg_ppu_tests_2005.09.15b
+
+### ☮️
+
+thank you binji for fixing some bugs
