@@ -9,6 +9,7 @@ void cart_init(struct cart* cart)
 		cart->chr_rom_bank_mode = 1;
 		cart->mmc1_bt = 0;
 		cart->mmc1_sr = 0;
+		cart->prg_ram_enable = 1;
 		break;
 	}
 }
