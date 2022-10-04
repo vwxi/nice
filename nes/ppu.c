@@ -156,16 +156,10 @@ u16 ppu_bg_addr(struct ppu* ppu, u8 tile)
 	return half | (tile << 4) | (ppu->v >> 12);
 }
 
-u16 ppu_spr_addr(struct ppu* ppu, u8 tile, u8 y)
+u16 ppu_spr_addr(struct ppu* ppu, u8 bank, u8 tile, u8 y)
 {
-	u16 half = !!(ppu->ctrl & C_SPR_PT) << 12;
+	u16 half = bank << 12;
 	return half | (tile << 4) | y;
-}
-
-u16 ppu_spr2_addr(struct ppu* ppu, u8 tile, u8 y)
-{
-	u16 half = (tile & 1) << 12;
-	return half | ((tile & ~1) << 4) | y;
 }
 
 int ppu_visible(struct ppu* ppu, u8 y)
@@ -492,6 +486,7 @@ u8 _swap(u8 b)
 
 void ppu_spr_fetch(struct ppu* ppu)
 {
+	u8 oti, ob;
 	u16 addr;
 	int y;
 
@@ -509,24 +504,22 @@ void ppu_spr_fetch(struct ppu* ppu)
 	if (!(ppu->ctrl & C_SPR_SZ)) { // 8x8
 		// out of bounds?
 		if (y > 7 || y < 0) return;
-
 		// is sprite flipped vertically?
-		if (ppu->sprites[ppu->cur_spr].attr & A_FLIP_VERT) {
-			y = 7 - y;
-		}
-
-		addr = ppu_spr_addr(ppu, ppu->soam[ppu->cur_spr].tile, y);
+		if (ppu->sprites[ppu->cur_spr].attr & A_FLIP_VERT) y = 7 - y;
+		// fetch addr
+		addr = ppu_spr_addr(ppu, !!(ppu->ctrl & C_SPR_PT), ppu->soam[ppu->cur_spr].tile, y);
 	}
 	else { // 8x16
 		// out of bounds?
 		if (y > 15 || y < 0) return;
-
+		// old soam values
+		ob = ppu->soam[ppu->cur_spr].tile & 1, oti = ppu->soam[ppu->cur_spr].tile & ~1;
 		// is sprite flipped vertically?
-		if (ppu->sprites[ppu->cur_spr].attr & A_FLIP_VERT) {
-			y = 15 - y;
-		}
-
-		addr = ppu_spr2_addr(ppu, ppu->soam[ppu->cur_spr].tile, y);
+		if (ppu->sprites[ppu->cur_spr].attr & A_FLIP_VERT) y = 15 - y;
+		// is sprite lower half?
+		if (y > 7) { oti++; y -= 8; }
+		// fetch addr
+		addr = ppu_spr_addr(ppu, ob, oti, y);
 	}
 
 	ppu->sprites_found++;

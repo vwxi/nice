@@ -143,18 +143,19 @@ void mmc1_reg_write(struct cart* cart, u16 addr, u8 val)
 
 void mmc1_write(struct cart* cart, u16 addr, u8 val)
 {
-	W(0x6000, 0x7fff, if(cart->prg_ram_enable) cart->prg_ram[addr - 0x6000]);
+	W(0x6000, 0x7fff, if(cart->prg_ram_enable) cart->prg_ram[addr - 0x6000] = val);
 	W(0x8000, 0xffff, mmc1_reg_write(cart, addr, val));
 }
 
 u8 mmc1_chr_read(struct cart* cart, u16 addr)
 {
-	if (cart->chr_rom_bank_mode) {
+	if (!cart->chr_rom_bank_mode) {
 		R(0x0000, 0x1fff, cart->chr[(addr + 0x1000 * (cart->chr_bank0 & ~1)) % cart->chr_sz])
 	}
-
-	R(0x0000, 0x0fff, cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz]);
-	R(0x1000, 0x1fff, cart->chr[(addr - 0x1000 + 0x1000 * cart->chr_bank1) % cart->chr_sz]);
+	else {
+		R(0x0000, 0x0fff, cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz]);
+		R(0x1000, 0x1fff, cart->chr[(addr - 0x1000 + 0x1000 * cart->chr_bank1) % cart->chr_sz]);
+	}
 
 	return 0;
 }
@@ -163,10 +164,11 @@ void mmc1_chr_write(struct cart* cart, u16 addr, u8 val)
 {
 	if (!cart->chr_ram) return;
 	
-	if (cart->chr_rom_bank_mode) {
+	if (!cart->chr_rom_bank_mode) {
 		W(0x0000, 0x1fff, cart->chr[(addr + 0x1000 * (cart->chr_bank0 & ~1)) % cart->chr_sz] = val);
 	}
-
-	W(0x0000, 0x0fff, cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz] = val);
-	W(0x1000, 0x1fff, cart->chr[(addr - 0x1000 + 0x1000 * cart->chr_bank1) % cart->chr_sz] = val);
+	else {
+		W(0x0000, 0x0fff, cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz] = val);
+		W(0x1000, 0x1fff, cart->chr[(addr - 0x1000 + 0x1000 * cart->chr_bank1) % cart->chr_sz] = val);
+	}
 }
