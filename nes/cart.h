@@ -27,6 +27,17 @@ struct cart {
 	u8 mmc1_sr;
 	u8 mmc1_bt;
 	u8 mmc1_ctrl;
+
+	u8 mmc3_r[8];
+	u8 mmc3_reg;
+	u8 mmc3_data;
+	u8 mmc3_irq_state;
+	u8 mmc3_irq_latch;
+	u8 mmc3_irq_ctr;
+	u8 mmc3_clock;
+	u8 mmc3_reload;
+	u8 a12_wait;
+	u16 clocks;
 };
 
 void cart_init(struct cart*);
@@ -34,17 +45,26 @@ u8 cart_read(struct cart*, u16);
 void cart_write(struct cart*, u16, u8);
 u8 cart_chr_read(struct cart*, u16);
 void cart_chr_write(struct cart*, u16, u8);
+void cart_a12(struct cart* cart, u16);
 
-
-/*nightmare*/
+// mapper 0
 u8 nrom_read(struct cart*, u16);
 void nrom_write(struct cart*, u16, u8);
 u8 nrom_chr_read(struct cart*, u16);
 void nrom_chr_write(struct cart*, u16, u8);
 
+// mapper 1
 u8 mmc1_read(struct cart*, u16);
 void mmc1_write(struct cart*, u16, u8);
 u8 mmc1_chr_read(struct cart*, u16);
 void mmc1_chr_write(struct cart*, u16, u8);
+
+// mapper 4
+void mmc3_irq_tick(struct cart*, u8);
+u8 mmc3_read(struct cart*, u16);
+void mmc3_write(struct cart*, u16, u8);
+u8 mmc3_chr_read(struct cart*, u16);
+void mmc3_chr_write(struct cart*, u16, u8);
+void mmc3_a12(struct cart* cart, u16);
 
 #include "nes.h"

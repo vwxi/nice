@@ -221,7 +221,10 @@ void cpu_interrupt(struct cpu* cpu, u8 interrupt)
 			
 			cpu->nmi = 0;
 		}
-
+		else {
+			nes.cpu.irq = 0;
+		}
+		
 		C; C;
 		push16(cpu, cpu->PC);
 		push(cpu, cpu->P & ~BF);

@@ -48,8 +48,10 @@ u16 ppu_mirror(struct ppu* ppu, u16 addr)
 	}
 }
 
+
 u8 ppu_read(struct ppu* ppu, u16 addr)
 {
+	//if(addr < 0x3f00) cart_a12(&nes.cart, addr);
 	R(0x0000, 0x1fff, cart_chr_read(&nes.cart, addr));
 	R(0x2000, 0x3eff, ppu->vram[ppu_mirror(ppu, addr)]);
 	R(0x3f00, 0x3fff, (ppu->pal[PAL] & ~0xc0) | (ppu->open_bus & 0xc0));
@@ -59,6 +61,7 @@ u8 ppu_read(struct ppu* ppu, u16 addr)
 
 void ppu_write(struct ppu* ppu, u16 addr, u8 val)
 {
+	//if (addr < 0x3f00) cart_a12(&nes.cart, addr);
 	W(0x0000, 0x1fff, cart_chr_write(&nes.cart, addr, val));
 	W(0x2000, 0x3eff, ppu->vram[ppu_mirror(ppu, addr)] = val);
 	W(0x3f00, 0x3fff, ppu->pal[PAL] = val);
@@ -153,12 +156,14 @@ void ppu_shift_registers(struct ppu* ppu)
 u16 ppu_bg_addr(struct ppu* ppu, u8 tile)
 {
 	u16 half = !!(ppu->ctrl & C_BG_PT) << 12;
+	cart_a12(&nes.cart, half);
 	return half | (tile << 4) | (ppu->v >> 12);
 }
 
 u16 ppu_spr_addr(struct ppu* ppu, u8 bank, u8 tile, u8 y)
 {
 	u16 half = bank << 12;
+	cart_a12(&nes.cart, half);
 	return half | (tile << 4) | y;
 }
 
@@ -180,7 +185,10 @@ void ppu_ppudata_inc(struct ppu* ppu)
 		ppu_inc_x(ppu);
 		ppu_inc_y(ppu);
 	}
-	else ppu->v += (ppu->ctrl & C_VRAM_INC) ? 32 : 1;
+	else {
+		ppu->v += (ppu->ctrl & C_VRAM_INC) ? 32 : 1;
+		cart_a12(&nes.cart, ppu->v);
+	}
 }
 
 u8 ppu_io_read(struct ppu* ppu, u16 addr)
@@ -224,7 +232,7 @@ u8 ppu_io_read(struct ppu* ppu, u16 addr)
 
 		ppu_update_open_bus(ppu, s);
 		ppu_ppudata_inc(ppu);
-
+		
 		return s;
 	}
 
@@ -283,6 +291,7 @@ void ppu_io_write(struct ppu* ppu, u16 addr, u8 val)
 			ppu->t &= ~0xff;
 			ppu->t |= val;
 			ppu->v = ppu->t;
+			cart_a12(&nes.cart, ppu->v);
 		}
 		else {
 			ppu->t &= ~0x3f00;
@@ -384,16 +393,30 @@ void ppu_bg_fetch(struct ppu* ppu)
 	switch (ppu->dot % 8) {
 	case 1: 
 		ppu->ntl = ppu_read(ppu, NMTA); 
+		cart_a12(&nes.cart, 0);
+
 		if(ppu->dot >= 9) 
 			ppu_shift_update(ppu); 
+
 		break;
 	case 3: 
-		ppu->atl = ppu_read(ppu, ATRA); 
+		ppu->atl = ppu_read(ppu, ATRA);
+		cart_a12(&nes.cart, 0);
+
 		ppu_atl_adjust(ppu); 
+
 		break;
-	case 5: ppu->ptl = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl)); break;
-	case 7: ppu->pth = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl) + 8); break;
-	case 0: ppu_inc_x(ppu); break;
+	case 5:
+		ppu->ptl = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl)); 
+		break;
+	case 7: 
+		ppu->pth = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl) + 8);
+		break;
+	case 0: 
+		ppu_inc_x(ppu); 
+		cart_a12(&nes.cart, 0); 
+		
+		break;
 	}
 }
 
@@ -492,9 +515,6 @@ void ppu_spr_fetch(struct ppu* ppu)
 
 	ppu->cur_spr = (ppu->dot - 264) / 8;
 
-	if (ppu->cur_spr > ppu->sprites_found) return;
-	if (!(ppu->mask & M_SPR)) return;
-
 	ppu->sprites[ppu->cur_spr].y = ppu->soam[ppu->cur_spr].y_coord;
 	ppu->sprites[ppu->cur_spr].x = ppu->soam[ppu->cur_spr].x_coord;
 	ppu->sprites[ppu->cur_spr].attr = ppu->soam[ppu->cur_spr].attr;
@@ -502,16 +522,12 @@ void ppu_spr_fetch(struct ppu* ppu)
 	y = ppu->scanline - ppu->sprites[ppu->cur_spr].y;
 
 	if (!(ppu->ctrl & C_SPR_SZ)) { // 8x8
-		// out of bounds?
-		if (y > 7 || y < 0) return;
 		// is sprite flipped vertically?
 		if (ppu->sprites[ppu->cur_spr].attr & A_FLIP_VERT) y = 7 - y;
 		// fetch addr
 		addr = ppu_spr_addr(ppu, !!(ppu->ctrl & C_SPR_PT), ppu->soam[ppu->cur_spr].tile, y);
 	}
 	else { // 8x16
-		// out of bounds?
-		if (y > 15 || y < 0) return;
 		// old soam values
 		ob = ppu->soam[ppu->cur_spr].tile & 1, oti = ppu->soam[ppu->cur_spr].tile & ~1;
 		// is sprite flipped vertically?
@@ -553,7 +569,7 @@ void ppu_visible_tick(struct ppu* ppu)
 	// sprite loading
 	if (ppu->dot >= 257 && ppu->dot <= 320) {
 		ppu->oam_addr = 0;
-		if (ppu->dot % 8 == 0)
+		if (ppu->dot % 8 == 0) 
 			ppu_spr_fetch(ppu);
 	}
 	// background evaluation for this line and the next line
@@ -593,6 +609,10 @@ void ppu_vblank_tick(struct ppu* ppu)
 		ppu->status |= S_VBL;
 		ppu->ppu_delay = 3;
 	}
+
+	if (ppu->scanline == 241 && ppu->dot == 1) {
+		cart_a12(&nes.cart, ppu->v);
+	}
 }
 
 void ppu_pre_rend_tick(struct ppu* ppu)
@@ -609,6 +629,12 @@ void ppu_pre_rend_tick(struct ppu* ppu)
 	// sprite evaluation for next line
 	if (ppu->dot >= 65 && ppu->dot <= 256) {
 		ppu_spr_eval(ppu);
+	}
+	// sprite loading
+	if (ppu->dot >= 257 && ppu->dot <= 320) {
+		ppu->oam_addr = 0;
+		if (ppu->dot % 8 == 0)
+			ppu_spr_fetch(ppu);
 	}
 	// vert(v) = vert(t)
 	if (ppu->dot >= 280 && ppu->dot <= 304) {
@@ -651,7 +677,9 @@ void ppu_tick(struct ppu* ppu)
  		ppu->dot = 0;
 		if (++ppu->scanline > 261) {
 			ppu->scanline = ppu->vbl_block = 0;
-			++ppu->frames;
 		}
 	}
+
+	if (nes.cart.a12_wait != 0)
+		nes.cart.a12_wait--;
 }
