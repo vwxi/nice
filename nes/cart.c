@@ -15,7 +15,7 @@ void cart_init(struct cart* cart)
 		cart->prg_banks *= 2;
 		cart->chr_banks /= 2;
 		cart->prg_ram_enable = 1;
-		cart->a12_wait = 3;
+		cart->a12_wait = 10;
 		break;
 	}
 }
@@ -215,24 +215,20 @@ void mmc3_a12(struct cart* cart, u16 addr)
 {
 	u16 a12 = !!(addr & 0x1000), irq=0;
 
-	if (!cart->mmc3_clock && a12 && cart->a12_wait == 0) {
+	if (!cart->mmc3_clock && a12) {
 		if (cart->mmc3_irq_ctr == 0 || cart->mmc3_reload) {
 			cart->mmc3_irq_ctr = cart->mmc3_irq_latch;
-			cart->mmc3_reload = 0;
-			if(cart->mmc3_irq_ctr == 0) irq = 1;
 		}
 		else {
-			if (--cart->mmc3_irq_ctr == 0)
-				irq = 1;
+			--cart->mmc3_irq_ctr;
 		}
 
-		if (irq && cart->mmc3_irq_state) {
+		if (cart->mmc3_irq_ctr == 0 && cart->mmc3_irq_state) {
 			nes.cpu.irq = 1;
 		}
 
 		cart->mmc3_reload = 0;
 	}
-	else if (cart->mmc3_clock && !a12) cart->a12_wait = 3;
 
 	cart->mmc3_clock = a12;
 }

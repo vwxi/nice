@@ -34,6 +34,7 @@ void ppu_init(struct ppu* ppu)
 	ppu->v = ppu->t = ppu->x = ppu->w = 0;
 	ppu->vbl_block = 0;
 	ppu->ctr = ppu->s = 0;
+	ppu->frames = 1;
 	memcpy(ppu->pal, ppu_default_pal, 32);
 	memset(ppu->pixels, ppu_clr_pal[0], SIZE);
 }
@@ -48,10 +49,8 @@ u16 ppu_mirror(struct ppu* ppu, u16 addr)
 	}
 }
 
-
 u8 ppu_read(struct ppu* ppu, u16 addr)
 {
-	//if(addr < 0x3f00) cart_a12(&nes.cart, addr);
 	R(0x0000, 0x1fff, cart_chr_read(&nes.cart, addr));
 	R(0x2000, 0x3eff, ppu->vram[ppu_mirror(ppu, addr)]);
 	R(0x3f00, 0x3fff, (ppu->pal[PAL] & ~0xc0) | (ppu->open_bus & 0xc0));
@@ -61,7 +60,6 @@ u8 ppu_read(struct ppu* ppu, u16 addr)
 
 void ppu_write(struct ppu* ppu, u16 addr, u8 val)
 {
-	//if (addr < 0x3f00) cart_a12(&nes.cart, addr);
 	W(0x0000, 0x1fff, cart_chr_write(&nes.cart, addr, val));
 	W(0x2000, 0x3eff, ppu->vram[ppu_mirror(ppu, addr)] = val);
 	W(0x3f00, 0x3fff, ppu->pal[PAL] = val);
@@ -157,6 +155,7 @@ u16 ppu_bg_addr(struct ppu* ppu, u8 tile)
 {
 	u16 half = !!(ppu->ctrl & C_BG_PT) << 12;
 	cart_a12(&nes.cart, half);
+
 	return half | (tile << 4) | (ppu->v >> 12);
 }
 
@@ -164,6 +163,7 @@ u16 ppu_spr_addr(struct ppu* ppu, u8 bank, u8 tile, u8 y)
 {
 	u16 half = bank << 12;
 	cart_a12(&nes.cart, half);
+
 	return half | (tile << 4) | y;
 }
 
@@ -187,7 +187,7 @@ void ppu_ppudata_inc(struct ppu* ppu)
 	}
 	else {
 		ppu->v += (ppu->ctrl & C_VRAM_INC) ? 32 : 1;
-		cart_a12(&nes.cart, ppu->v);
+		cart_a12(&nes.cart, ppu->v & 0x3fff);
 	}
 }
 
@@ -206,9 +206,9 @@ u8 ppu_io_read(struct ppu* ppu, u16 addr)
 
 		if (ppu->scanline == 241) {
 			switch (ppu->dot) {
-			case 1: ppu->vbl_block = 1; break;
-			case 2: ppu->vbl_block = 1; nes.cpu.nmi = 0; break;
-			case 3: nes.cpu.nmi = 0; break;
+			case 2: ppu->vbl_block = 1; break;
+			case 3: ppu->vbl_block = 1; nes.cpu.nmi = 0; break;
+			case 4: nes.cpu.nmi = 0; break;
 			}
 		}
 
@@ -232,7 +232,8 @@ u8 ppu_io_read(struct ppu* ppu, u16 addr)
 
 		ppu_update_open_bus(ppu, s);
 		ppu_ppudata_inc(ppu);
-		
+		cart_a12(&nes.cart, ppu->v);
+
 		return s;
 	}
 
@@ -250,7 +251,7 @@ void ppu_io_write(struct ppu* ppu, u16 addr, u8 val)
 
 	switch (addr) {
 	case 0x2000: 
-		if (!(ppu->ctrl & C_NMI) && (ppu->status & S_VBL) && (val & C_NMI) && (ppu->dot != 1))
+		if (!(ppu->ctrl & C_NMI) && (ppu->status & S_VBL) && (val & C_NMI) && (ppu->dot != 2))
 			nes.cpu.nmi = nes.cpu.nmi_wait = 1;
 		
 		ppu->ctrl = val;
@@ -294,7 +295,7 @@ void ppu_io_write(struct ppu* ppu, u16 addr, u8 val)
 			cart_a12(&nes.cart, ppu->v);
 		}
 		else {
-			ppu->t &= ~0x3f00;
+			ppu->t &= ~0xff00;
 			ppu->t |= (val & 0x3f) << 8;
 		}
 
@@ -304,6 +305,7 @@ void ppu_io_write(struct ppu* ppu, u16 addr, u8 val)
 		ppu->ppu_data = val;
 		ppu_write(ppu, ppu->v & 0x3fff, ppu->ppu_data); 
 		ppu_ppudata_inc(ppu);
+		cart_a12(&nes.cart, ppu->v);
 		break;
 	case 0x4014: 
 		ppu->oam_dma_addr = val;
@@ -391,31 +393,31 @@ void ppu_atl_adjust(struct ppu* ppu)
 void ppu_bg_fetch(struct ppu* ppu)
 {
 	switch (ppu->dot % 8) {
-	case 1: 
-		ppu->ntl = ppu_read(ppu, NMTA); 
-		cart_a12(&nes.cart, 0);
+	case 1:
+		ppu->ntl = ppu_read(ppu, NMTA);
+		cart_a12(&nes.cart, NMTA);
 
-		if(ppu->dot >= 9) 
-			ppu_shift_update(ppu); 
+		if (ppu->dot >= 9)
+			ppu_shift_update(ppu);
 
 		break;
-	case 3: 
+	case 3:
 		ppu->atl = ppu_read(ppu, ATRA);
-		cart_a12(&nes.cart, 0);
+		cart_a12(&nes.cart, ATRA);
 
-		ppu_atl_adjust(ppu); 
+		ppu_atl_adjust(ppu);
 
 		break;
 	case 5:
-		ppu->ptl = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl)); 
+		ppu->ptl = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl));
 		break;
-	case 7: 
+	case 7:
 		ppu->pth = ppu_read(ppu, ppu_bg_addr(ppu, ppu->ntl) + 8);
 		break;
-	case 0: 
-		ppu_inc_x(ppu); 
-		cart_a12(&nes.cart, 0); 
-		
+	case 0:
+		ppu_inc_x(ppu);
+		cart_a12(&nes.cart, 0);
+
 		break;
 	}
 }
@@ -569,7 +571,7 @@ void ppu_visible_tick(struct ppu* ppu)
 	// sprite loading
 	if (ppu->dot >= 257 && ppu->dot <= 320) {
 		ppu->oam_addr = 0;
-		if (ppu->dot % 8 == 0) 
+		if (ppu->dot % 8 == 0)
 			ppu_spr_fetch(ppu);
 	}
 	// background evaluation for this line and the next line
@@ -583,13 +585,10 @@ void ppu_visible_tick(struct ppu* ppu)
 	}
 	// increment vert(v)
 	if (ppu->dot == 256) {
-		ppu_shift_registers(ppu);
 		ppu_inc_y(ppu);
 	}
 	// hori(v) = hori(t)
 	if (ppu->dot == 257) {
-		ppu_shift_registers(ppu);
-		ppu_shift_update(ppu);
 		ppu_horz_copy(ppu);
 	}
 }
@@ -605,13 +604,9 @@ void ppu_vblank_tick(struct ppu* ppu)
 		window_draw(&nes.window);
 	}
 
-	if (ppu->scanline == 241 && ppu->dot == 1 && !ppu->vbl_block) {
+	if (ppu->scanline == 241 && ppu->dot == 2 && !ppu->vbl_block) {
 		ppu->status |= S_VBL;
 		ppu->ppu_delay = 3;
-	}
-
-	if (ppu->scanline == 241 && ppu->dot == 1) {
-		cart_a12(&nes.cart, ppu->v);
 	}
 }
 
@@ -636,9 +631,21 @@ void ppu_pre_rend_tick(struct ppu* ppu)
 		if (ppu->dot % 8 == 0)
 			ppu_spr_fetch(ppu);
 	}
+	// increment vert(v)
+	if (ppu->dot == 256) {
+		ppu_inc_y(ppu);
+	}
+	// hori(v) = hori(t)
+	if (ppu->dot == 257) {
+		ppu_horz_copy(ppu);
+	}
 	// vert(v) = vert(t)
 	if (ppu->dot >= 280 && ppu->dot <= 304) {
 		ppu_vert_copy(ppu);
+	}
+	// background evaluation for this line and the next line
+	if ((ppu->dot >= 1 && ppu->dot <= 256)) {
+		ppu_bg_fetch(ppu);
 	}
 	// bg fetch for next line
 	if (ppu->dot >= 321 && ppu->dot <= 337) {
@@ -647,10 +654,10 @@ void ppu_pre_rend_tick(struct ppu* ppu)
 	}
 
 	switch (ppu->dot) {
-	case 1: 
+	case 2: 
 		ppu->status &= ~(S_VBL | S_SPR0HIT | S_SPR_OVR); 
 		break;
-	case 338: 
+	case 339: 
 		if ((ppu->frames & 1) && REND)
 			ppu->dot++;
 		break;
@@ -677,9 +684,7 @@ void ppu_tick(struct ppu* ppu)
  		ppu->dot = 0;
 		if (++ppu->scanline > 261) {
 			ppu->scanline = ppu->vbl_block = 0;
+			++ppu->frames;
 		}
 	}
-
-	if (nes.cart.a12_wait != 0)
-		nes.cart.a12_wait--;
 }

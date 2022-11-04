@@ -109,7 +109,7 @@ void nes_write16(u16 addr, u16 val)
 void nes_cycle()
 {
 	nes.cpu.cycles++;
-	
+
 	ppu_tick(&nes.ppu);
 	ppu_tick(&nes.ppu);
 	ppu_tick(&nes.ppu);

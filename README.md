@@ -16,7 +16,9 @@ a work-in-progress NES emulator written for Windows
 ## features
 
 - cycle accurate CPU and PPU emulation
-- support for NROM, MMC1 games (tbd)
+- support for mapper 0, 1, 4* games (tbd)
+
+*rad racer 2 doesn't work
 
 ## keys
 
@@ -44,6 +46,7 @@ a work-in-progress NES emulator written for Windows
 - oam_stress
 - sprite_hit_tests_2005.10.05
 - blargg_ppu_tests_2005.09.15b
+- mmc3_test_2 (except 4-scanline_timing (#8) and 6-MMC3_alt (#2))
 
 ### ☮️
 

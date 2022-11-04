@@ -10,7 +10,7 @@
 #include <math.h>
 #include <time.h>
 
-#define L(m,...) printf("%3d, %3d, %3d: " m "\n", nes.ppu.frames + 1, nes.ppu.scanline, nes.ppu.dot, __VA_ARGS__);
+#define L(m,...) printf("%3d, %3d, %3d: " m "\n", nes.ppu.frames, nes.ppu.scanline, nes.ppu.dot, __VA_ARGS__);
 #undef L
 #define L(m,...) do {}while(0)
 

@@ -62,6 +62,7 @@ struct cpu {
 	u8 nmi;
 
 	u8 irq;
+
 	u8 halted;
 	u8 pgc;
 

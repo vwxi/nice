@@ -127,7 +127,7 @@ void RORM(struct cpu* cpu)
 	C;
 	nes_write(cpu->addr, cpu->dat);
 }
-void RTI(struct cpu* cpu) { C; cpu->P = pop(cpu) | (1<<5); cpu->PC = pop16(cpu); } // wtf
+void RTI(struct cpu* cpu) { C; cpu->P = pop(cpu) | (1<<5); cpu->PC = pop16(cpu); }
 void RTS(struct cpu* cpu) { C; cpu->PC = pop16(cpu) + 1; C; }
 void SBC(struct cpu* cpu) { DAT; cpu->dat = ~cpu->dat; _ADC(cpu, cpu->dat); }
 void SEC(struct cpu* cpu) { SETF(CF); }
@@ -213,18 +213,18 @@ void cpu_interrupt(struct cpu* cpu, u8 interrupt)
 		break;
 	case I_NMI:
 	case I_IRQ:
-		if (interrupt == I_NMI) {
+		if (cpu->nmi) {
 			if (cpu->nmi_wait) {
 				cpu->nmi_wait = 0;
 				break;
 			}
-			
+
 			cpu->nmi = 0;
 		}
 		else {
-			nes.cpu.irq = 0;
+			cpu->irq = 0;
 		}
-		
+
 		C; C;
 		push16(cpu, cpu->PC);
 		push(cpu, cpu->P & ~BF);
@@ -237,6 +237,13 @@ void cpu_interrupt(struct cpu* cpu, u8 interrupt)
 void cpu_step(struct cpu* cpu)
 {
 	if (cpu->halted) return;
+
+	if (cpu->nmi || (cpu->irq && !ISF(IF))) {
+		if (cpu->nmi)
+			cpu_interrupt(cpu, I_NMI);
+		else
+			cpu_interrupt(cpu, I_IRQ);
+	}
 
 	cpu->op = nes_read(cpu->PC++);
 	cpu->addr = cpu->dat = cpu->pgc = 0;
@@ -310,7 +317,4 @@ void cpu_step(struct cpu* cpu)
 		o(fc, ABX,UNOP)	o(fd, ABX, SBC)	o(fe, ABXW, INC)o(ff, ABXW,ISC)
 	}
 #undef o
-
-	if (cpu->nmi) cpu_interrupt(cpu, I_NMI);
-	else if (cpu->irq && !ISF(IF)) cpu_interrupt(cpu, I_IRQ);
 }

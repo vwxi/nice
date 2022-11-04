@@ -36,7 +36,7 @@ struct cart {
 	u8 mmc3_irq_ctr;
 	u8 mmc3_clock;
 	u8 mmc3_reload;
-	u8 a12_wait;
+	int a12_wait;
 	u16 clocks;
 };
 
