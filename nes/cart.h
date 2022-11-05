@@ -59,12 +59,29 @@ void mmc1_write(struct cart*, u16, u8);
 u8 mmc1_chr_read(struct cart*, u16);
 void mmc1_chr_write(struct cart*, u16, u8);
 
+// mapper 2
+u8 uxrom_read(struct cart*, u16);
+void uxrom_write(struct cart*, u16, u8);
+u8 uxrom_chr_read(struct cart*, u16);
+void uxrom_chr_write(struct cart*, u16, u8);
+
+// mapper 3
+u8 cnrom_read(struct cart*, u16);
+void cnrom_write(struct cart*, u16, u8);
+u8 cnrom_chr_read(struct cart*, u16);
+void cnrom_chr_write(struct cart*, u16, u8);
+
 // mapper 4
-void mmc3_irq_tick(struct cart*, u8);
 u8 mmc3_read(struct cart*, u16);
 void mmc3_write(struct cart*, u16, u8);
 u8 mmc3_chr_read(struct cart*, u16);
 void mmc3_chr_write(struct cart*, u16, u8);
 void mmc3_a12(struct cart* cart, u16);
+
+// mapper 7
+u8 axrom_read(struct cart*, u16);
+void axrom_write(struct cart*, u16, u8);
+u8 axrom_chr_read(struct cart*, u16);
+void axrom_chr_write(struct cart*, u16, u8);
 
 #include "nes.h"

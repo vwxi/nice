@@ -12,7 +12,8 @@
 
 #define HORIZOM 0
 #define VERTICM 1
-#define ONESCRM 2
+#define ONESC1M 2
+#define ONESC2M 3
 
 /* PPUCTRL flags */
 #define C_BASE_NT 3

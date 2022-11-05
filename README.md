@@ -16,9 +16,9 @@ a work-in-progress NES emulator written for Windows
 ## features
 
 - cycle accurate CPU and PPU emulation
-- support for mapper 0, 1, 4* games (tbd)
+- support for mappers 0, 1, 2, 3, 4*, 7
 
-*rad racer 2 doesn't work
+*rad racer 2 and wario's woods don't work
 
 ## keys
 

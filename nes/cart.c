@@ -3,7 +3,6 @@
 void cart_init(struct cart* cart)
 {
 	switch (cart->type) {
-	case 0: break;
 	case 1:
 		cart->prg_rom_bank_mode = 3;
 		cart->chr_rom_bank_mode = 1;
@@ -20,12 +19,17 @@ void cart_init(struct cart* cart)
 	}
 }
 
+// OPTIMIZATION: FUNCTION TABLES!!!!!!
+
 u8 cart_read(struct cart* cart, u16 addr)
 {
 	switch (cart->type) {
 	case 0: return nrom_read(cart, addr);
 	case 1: return mmc1_read(cart, addr);
+	case 2: return uxrom_read(cart, addr);
+	case 3: return cnrom_read(cart, addr);
 	case 4: return mmc3_read(cart, addr);
+	case 7: return axrom_read(cart, addr);
 	}
 
 	return 0;
@@ -36,7 +40,10 @@ void cart_write(struct cart* cart, u16 addr, u8 val)
 	switch (cart->type) {
 	case 0:	nrom_write(cart, addr, val); break;
 	case 1: mmc1_write(cart, addr, val); break;
+	case 2: uxrom_write(cart, addr, val); break;
+	case 3: cnrom_write(cart, addr, val); break;
 	case 4: mmc3_write(cart, addr, val); break;
+	case 7: axrom_write(cart, addr, val); break;
 	}
 }
 
@@ -45,7 +52,10 @@ u8 cart_chr_read(struct cart* cart, u16 addr)
 	switch (cart->type) {
 	case 0: return nrom_chr_read(cart, addr);
 	case 1: return mmc1_chr_read(cart, addr);
+	case 2: return uxrom_chr_read(cart, addr);
+	case 3: return cnrom_chr_read(cart, addr);
 	case 4: return mmc3_chr_read(cart, addr);
+	case 7: return axrom_chr_read(cart, addr);
 	}
 
 	return 0;
@@ -56,7 +66,10 @@ void cart_chr_write(struct cart* cart, u16 addr, u8 val)
 	switch (cart->type) {
 	case 0: nrom_chr_write(cart, addr, val); break;
 	case 1: mmc1_chr_write(cart, addr, val); break;
+	case 2: uxrom_chr_write(cart, addr, val); break;
+	case 3: cnrom_chr_write(cart, addr, val); break;
 	case 4: mmc3_chr_write(cart, addr, val); break;
+	case 7: axrom_chr_write(cart, addr, val); break;
 	}
 }
 
@@ -117,7 +130,6 @@ u8 mmc1_read(struct cart* cart, u16 addr)
 	return 0;
 }
 
-
 void mmc1_reg_write(struct cart* cart, u16 addr, u8 val)
 {
 	if (val & 0x80) {
@@ -133,7 +145,7 @@ void mmc1_reg_write(struct cart* cart, u16 addr, u8 val)
 			switch (addr >> 12) {
 			case 0x8: case 0x9: // ctrl
 				switch (cart->mmc1_sr & 3) {
-				case 0: case 1: nes.ppu.mirror = ONESCRM; break;
+				case 0: case 1: nes.ppu.mirror = ONESC1M; break;
 				case 2: nes.ppu.mirror = VERTICM; break;
 				case 3: nes.ppu.mirror = HORIZOM; break;
 				}
@@ -189,6 +201,57 @@ void mmc1_chr_write(struct cart* cart, u16 addr, u8 val)
 		W(0x0000, 0x0fff, cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz] = val);
 		W(0x1000, 0x1fff, cart->chr[(addr - 0x1000 + 0x1000 * cart->chr_bank1) % cart->chr_sz] = val);
 	}
+}
+
+u8 uxrom_read(struct cart* cart, u16 addr)
+{
+	R(0x8000, 0xbfff, cart->prg[addr - 0x8000 + cart->prg_bank * 0x4000]);
+	R(0xc000, 0xffff, cart->prg[addr - 0xc000 + (cart->prg_banks-1) * 0x4000]);
+
+	return 0;
+}
+
+void uxrom_write(struct cart* cart, u16 addr, u8 val)
+{
+	W(0x8000, 0xffff, cart->prg_bank = val & 0xf);
+}
+
+u8 uxrom_chr_read(struct cart* cart, u16 addr)
+{
+	R(0x0000, 0x1fff, cart->chr[addr]);
+
+	return 0;
+}
+
+void uxrom_chr_write(struct cart* cart, u16 addr, u8 val)
+{
+	if (cart->chr_ram)
+		cart->chr[addr % cart->chr_sz] = val;
+}
+
+u8 cnrom_read(struct cart* cart, u16 addr)
+{
+	R(0x8000, 0xffff, cart->prg[(addr - 0x8000) % cart->prg_sz]);
+
+	return 0;
+}
+
+void cnrom_write(struct cart* cart, u16 addr, u8 val)
+{
+	W(0x8000, 0xffff, cart->chr_bank0 = val);
+}
+
+u8 cnrom_chr_read(struct cart* cart, u16 addr)
+{
+	R(0x0000, 0x1fff, cart->chr[(addr + 0x2000 * cart->chr_bank0) % cart->chr_sz]);
+
+	return 0;
+}
+
+void cnrom_chr_write(struct cart* cart, u16 addr, u8 val)
+{
+	if (cart->chr_ram)
+		cart->chr[(addr + 0x1000 * cart->chr_bank0) % cart->chr_sz] = val;
 }
 
 u8 mmc3_read(struct cart* cart, u16 addr)
@@ -291,4 +354,29 @@ void mmc3_chr_write(struct cart* cart, u16 addr, u8 val)
 		W(0x1800, 0x1bff, cart->chr[addr - 0x1800 + 0x400 * cart->mmc3_r[4]] = val);
 		W(0x1c00, 0x1fff, cart->chr[addr - 0x1c00 + 0x400 * cart->mmc3_r[5]] = val);
 	}
+}
+
+u8 axrom_read(struct cart* cart, u16 addr)
+{
+	R(0x8000, 0xffff, cart->prg[addr - 0x8000 + 0x8000 * cart->prg_bank]);
+
+	return 0;
+}
+
+void axrom_write(struct cart* cart, u16 addr, u8 val)
+{
+	W(0x8000, 0xffff, cart->prg_bank = val & 7; nes.ppu.mirror = (val & 0x10) ? ONESC1M : ONESC2M; );
+}
+
+u8 axrom_chr_read(struct cart* cart, u16 addr)
+{
+	R(0x0000, 0x1fff, cart->chr[addr]);
+
+	return 0;
+}
+
+void axrom_chr_write(struct cart* cart, u16 addr, u8 val)
+{
+	if (cart->chr_ram)
+		cart->chr[addr % cart->chr_sz] = val;
 }

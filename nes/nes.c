@@ -118,7 +118,7 @@ void nes_cycle()
 int nes_mapper_supported()
 {
 	const u8 ines_mappers[256] = { 
-		0, 1, 4
+		0, 1, 2, 3, 4, 7
 	};
 	
 	int i = 0;
