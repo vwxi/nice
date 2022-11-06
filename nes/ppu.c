@@ -35,6 +35,7 @@ void ppu_init(struct ppu* ppu)
 	ppu->vbl_block = 0;
 	ppu->ctr = ppu->s = 0;
 	ppu->frames = 1;
+
 	memcpy(ppu->pal, ppu_default_pal, 32);
 	memset(ppu->pixels, ppu_clr_pal[0], SIZE);
 }
@@ -46,7 +47,8 @@ u16 ppu_mirror(struct ppu* ppu, u16 addr)
 	case VERTICM: return addr & 0x7ff;
 	case ONESC1M: return addr & 0x3ff;
 	case ONESC2M: return (addr & 0x3ff) | 0x400;
-	default: return addr - 0x2000;
+	default: 
+	case FOURSCM: return addr - 0x2000;
 	}
 }
 

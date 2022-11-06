@@ -14,6 +14,7 @@
 #define VERTICM 1
 #define ONESC1M 2
 #define ONESC2M 3
+#define FOURSCM 4
 
 /* PPUCTRL flags */
 #define C_BASE_NT 3
@@ -113,7 +114,7 @@ struct ppu {
 	
 	u16 scanline;
 
-	u8 vram[0x800];
+	u8 vram[0x1000];
 	struct oam_entry oam[64];
 	struct oam_entry soam[8];
 	struct sprite sprites[8];

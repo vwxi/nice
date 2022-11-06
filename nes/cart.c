@@ -14,7 +14,6 @@ void cart_init(struct cart* cart)
 		cart->prg_banks *= 2;
 		cart->chr_banks /= 2;
 		cart->prg_ram_enable = 1;
-		cart->a12_wait = 10;
 		break;
 	}
 }
@@ -276,7 +275,7 @@ void mmc3_bank_select(struct cart* cart, u8 val)
 
 void mmc3_a12(struct cart* cart, u16 addr)
 {
-	u16 a12 = !!(addr & 0x1000), irq=0;
+	u16 a12 = !!(addr & 0x1000);
 
 	if (!cart->mmc3_clock && a12) {
 		if (cart->mmc3_irq_ctr == 0 || cart->mmc3_reload) {
@@ -301,7 +300,7 @@ void mmc3_write(struct cart* cart, u16 addr, u8 val)
 	W(0x6000, 0x7fff, if (cart->prg_ram_enable) cart->prg_ram[addr - 0x6000] = val);
 	if (!(addr & 1)) { // even
 		W(0x8000, 0x9ffe, mmc3_bank_select(cart, val)); // bank select
-		W(0xa000, 0xbffe, nes.ppu.mirror = !(val & 1)); // mirroring
+		W(0xa000, 0xbffe, if (!(nes.hdr.fl6 & 8)) nes.ppu.mirror = !(val & 1)); // mirroring
 		W(0xc000, 0xdffe, cart->mmc3_irq_latch = val); // irq latch
 		W(0xe000, 0xfffe, cart->mmc3_irq_state = 0; nes.cpu.irq = 0); // irq disable
 	}

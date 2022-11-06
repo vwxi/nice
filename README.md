@@ -18,7 +18,7 @@ a work-in-progress NES emulator written for Windows
 - cycle accurate CPU and PPU emulation
 - support for mappers 0, 1, 2, 3, 4*, 7
 
-*rad racer 2 and wario's woods don't work
+*wario's woods doesn't work
 
 ## keys
 

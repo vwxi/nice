@@ -3,7 +3,6 @@
 int main(int argc, char** argv)
 {
 	FILE* fp = NULL;
-	struct ines_header hdr;
 
 	if (argc != 2) {
 		printf("USAGE: %s [ROM file]\n", argv[0]);
@@ -15,22 +14,22 @@ int main(int argc, char** argv)
 		goto bad;
 	}
 
-	if (!fread(&hdr, sizeof(struct ines_header), 1, fp)) {
+	if (!fread(&nes.hdr, sizeof(struct ines_header), 1, fp)) {
 		puts("couldn't read iNES header");
 		goto bad;
 	}
 
-	if (!hdr.chr_sz)
+	if (!nes.hdr.chr_sz)
 		nes.cart.chr_ram =  1;
 
-	nes.cart.prg_banks = hdr.prg_sz;
-	nes.cart.chr_banks = hdr.chr_sz;
-	nes.cart.prg_sz = 0x4000 * hdr.prg_sz;
-	nes.cart.chr_sz = 0x2000 * (nes.cart.chr_ram ? 1 : hdr.chr_sz);
-	nes.cart.prg_ram_sz = (hdr.ram_sz != 0) ? 0x2000 * hdr.ram_sz : 0x2000;
-	nes.ppu.mirror = !(hdr.fl6 & (1 << 3)) ? hdr.fl6 & 1 : 2;
-	nes.cart.type = hdr.fl6 >> 4;
-	
+	nes.cart.prg_banks = nes.hdr.prg_sz;
+	nes.cart.chr_banks = nes.hdr.chr_sz;
+	nes.cart.prg_sz = 0x4000 * nes.hdr.prg_sz;
+	nes.cart.chr_sz = 0x2000 * (nes.cart.chr_ram ? 1 : nes.hdr.chr_sz);
+	nes.cart.prg_ram_sz = (nes.hdr.ram_sz != 0) ? 0x2000 * nes.hdr.ram_sz : 0x2000;
+	nes.ppu.mirror = !(nes.hdr.fl6 & 8) ? nes.hdr.fl6 & 1 : FOURSCM;
+	nes.cart.type = nes.hdr.fl6 >> 4;
+
 	if (!nes_mapper_supported()) {
 		puts("mapper unsupported");
 		goto bad;

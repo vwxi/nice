@@ -19,6 +19,7 @@ struct ines_header {
 };
 
 struct nes {
+	struct ines_header hdr;
 	struct window window;
 	struct cpu cpu;
 	struct cart cart;
