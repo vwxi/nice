@@ -41,10 +41,10 @@ a work-in-progress NES emulator written for Windows
 - ppu_vbl_nmi & vbl_nmi_timing
 - ppu_open_bus
 - scanline.nes
-- sprite_overflow_tests
+- sprite_overflow_tests (except 3.Timing (#6))
 - oam_read
 - oam_stress
-- sprite_hit_tests_2005.10.05
+- sprite_hit_tests_2005.10.05 (except 09.sprite_timing (#2))
 - blargg_ppu_tests_2005.09.15b
 - mmc3_test_2 (except 4-scanline_timing (#8) and 6-MMC3_alt (#2))
 
