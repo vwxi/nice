@@ -27,7 +27,8 @@ struct nes {
 	u8 joyp;
 	u8 strobe;
 	u8 jidx;
-} nes;
+};
+extern struct nes nes;
 
 int nes_init();
 
