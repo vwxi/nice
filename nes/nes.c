@@ -1,5 +1,7 @@
 #include "nes.h"
 
+struct nes nes;
+
 int nes_init()
 {
 	nes.cpu.cart = &nes.cart;
